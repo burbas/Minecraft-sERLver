@@ -20,6 +20,7 @@
 -define(SERVER, ?MODULE). 
 
 -include("../include/types.hrl").
+-include("../include/server_packets.hrl").
 
 -record(state, {
 	  socket,
@@ -59,12 +60,25 @@ init([Port]) ->
     case gen_tcp:listen(Port, [binary, {active, false}, {packet, 0}]) of
 	{ok, LSocket} ->
 	    {ok, Socket} = gen_tcp:accept(LSocket),
-	    Packet = <<?mc_short(2), ?mc_short(1), <<"-">>/binary>>,
+
+	    {ok, Binary} = gen_tcp:recv(Socket, 0),
+	    P = parser:parse_header(Binary),
+	    io:format("~p~n", [P]),
+
+	    Packet = generator:generate_header(#handshake{connection_hash = "-"}),
 	    gen_tcp:send(Socket, Packet),
 	    
-	    {ok, Binary} = gen_tcp:recv(Socket, 0),
-	    P = generator:parse_header(Binary),
-	    io:format("~p~n", [P]),
+	    {ok, Binary2} = gen_tcp:recv(Socket, 0),
+	    P2 = parser:parse_header(Binary2),
+	    io:format("~p~n", [P2]),
+
+	    Packet2 = generator:generate_header(#login_response{}),
+	    gen_tcp:send(Socket, Packet2),
+
+	    {ok, Binary3} = gen_tcp:recv(Socket, 0),
+	    P3 = parser:parse_header(Binary3),
+	    io:format("~p~n", [P3]),
+	    
 	    {ok, #state{socket = Socket, port = Port}};
 	{error, Reason} ->
 	    {stop, Reason}
