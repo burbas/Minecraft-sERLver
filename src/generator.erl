@@ -218,20 +218,57 @@ generate_header(#pre_chunk{
     <<?mc_byte(ID), ?mc_int(X), ?mc_int(Z), ?mc_byte(Md)>>;
 
 generate_header(#map_chunk{
-		  packet_id = _ID,
-		  x = _X,
-		  y = _Y,
-		  z = _Z,
-		  size_x = _SX,
-		  size_y = _SY,
-		  size_z = _SZ,
-		  compressed_chunk_size = _CCS,
-		  compressed_chunk = _CS
+		  packet_id = ID,
+		  x = X,
+		  y = Y,
+		  z = Z,
+		  size_x = SX,
+		  size_y = SY,
+		  size_z = SZ,
+		  compressed_chunk_size = CCS,
+		  compressed_chunk = CS
 		  }) ->
-    todo.
+    <<?mc_byte(ID), ?mc_int(X), ?mc_short(Y), ?mc_int(Z), ?mc_byte(SX), ?mc_byte(SY), ?mc_byte(SZ), ?mc_int(CCS), CS/binary>>;
 
-%% TODO: Last 4 packets
+generate_header(#multi_block_change{
+		  packet_id = ID,
+		  chunk_x = CX,
+		  chunk_z = CZ,
+		  array_size = ArraySize,
+		  coordinate_array = CoordinateArray,
+		  type_array = TypeArray,
+		  metadata_array = MetadataArray
+		  }) ->
+    %% Todo - The arrays need to be handled
+    <<?mc_byte(ID), ?mc_int(CX), ?mc_int(CZ), ?mc_short(ArraySize)>>;
 
+generate_header(#block_change{
+		  packet_id = ID,
+		  x = X,
+		  y = Y,
+		  z = Z,
+		  block_type = BlockType,
+		  block_metadata = BlockMetaData
+		  }) ->
+    <<?mc_byte(ID), ?mc_inte(X), ?mc_byte(Y), ?mc_int(Z), ?mc_byte(BlockType)>>;
+
+generate_header(#complex_entities{
+		  packet_id = ID,
+		  x = X,
+		  y = Y,
+		  z = Z,
+		  payload_size = PayloadSize,
+		  payload = Payload
+		  }) ->
+    <<?mc_byte(ID), ?mc_int(X), ?mc_short(Y), ?mc_int(Z), ?mc_short(PayloadSize), Payload/binary>>;
+
+generate_header(#kick{
+		   packet_id = ID,
+		   reason = Reason
+		  }) ->
+    ReasonBin = erlang:list_to_binary(Reason),
+    ReasonSize = erlang:size(ReasonBin),
+    <<?mc_byte(ID), ?mc_short(ReasonSize), ReasonBin/binary>>.
 
 
 
